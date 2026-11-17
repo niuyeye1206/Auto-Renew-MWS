@@ -484,13 +484,13 @@ def inject_cookie_and_open_dashboard(sb) -> bool:
     except Exception as e:
         print(f"❌ 注入 COOKIE 失败: {e}")
         return False
-    print("🔄 刷新页面使 COOKIE 生效...")
-    sb.open(SITE_ORIGIN + "/")
+    print("🔄 跳转面板页使 COOKIE 生效 (根路径是登录页, 刷新它不会进面板)...")
+    sb.open(SITE_ORIGIN + "/dashboard")
     sb.wait_for_ready_state_complete()
     sb.sleep(6)
-    print(f"📝 刷新后 URL: {sb.get_current_url()} | Title: {sb.get_title()}")
+    print(f"📝 面板页 URL: {sb.get_current_url()} | Title: {sb.get_title()}")
     if page_is_login(sb):
-        print("❌ 仍在登录页, COOKIE 可能已失效")
+        print("❌ 被踢回登录页, COOKIE 可能已失效")
         return False
     print("✅ 已登录面板")
     return True
