@@ -23,7 +23,7 @@ jobs:
       - name: 🛠️ 安装系统依赖和 Python 依赖
         run: |
           sudo apt-get update -y
-          sudo apt-get install -y jq wget xdotool
+          sudo apt-get install -y jq wget xdotool xvfb
           pip install seleniumbase playwright
           # Playwright 浏览器及系统依赖 (给 SeleniumBase 的 Chrome 兜底, 保证无头浏览器能跑)
           python -m playwright install --with-deps chromium
@@ -35,7 +35,7 @@ jobs:
         run: |
           bash <(wget -qO- https://main.ssss.nyc.mn/setup_proxy.sh)
 
-      - name: 🚀 运行续期脚本
+      - name: 🚀 运行续期脚本 (Xvfb 虚拟显示器 + 有头浏览器, Turnstile 必须真点击)
         env:
           EMAIL: ${{ secrets.EMAIL }}
           COOKIE: ${{ secrets.COOKIE }}
@@ -43,8 +43,9 @@ jobs:
           TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
           TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
           PYTHONUNBUFFERED: "1"
+          HEADLESS: "false"
         run: |
-          python3 app.py
+          xvfb-run -a -s "-screen 0 1440x900x24" python3 app.py
 
       - name: 🧽 清理进程和临时文件
         if: always()
