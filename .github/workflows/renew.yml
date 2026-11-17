@@ -47,6 +47,14 @@ jobs:
         run: |
           xvfb-run -a -s "-screen 0 1440x900x24" python3 app.py
 
+      - name: 📸 上传 Turnstile 诊断截图
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: turnstile-debug
+          path: /tmp/turnstile_before.png
+          if-no-files-found: ignore
+
       - name: 🧽 清理进程和临时文件
         if: always()
         run: |

@@ -324,6 +324,23 @@ def solve_turnstile(sb, timeout=120, tag="Turnstile", first_wait=10) -> bool:
     """轮询 Turnstile token, 没有则周期性点击 (用户要求多等一会: 超时 120s, 首等 10s)"""
     if turnstile_token(sb):
         return True
+    # 诊断: 截图 + 打印 widget 实际位置, 否则瞎点永远不知道点没点对
+    try:
+        sb.save_screenshot("/tmp/turnstile_before.png")
+        rect = js(sb, """
+            var els = document.querySelectorAll('iframe[src*="challenges.cloudflare.com"], .cf-turnstile');
+            var out = [];
+            for (var i = 0; i < els.length; i++) {
+                var r = els[i].getBoundingClientRect();
+                out.push(els[i].tagName + ' x=' + Math.round(r.x) + ' y=' + Math.round(r.y) + ' w=' + Math.round(r.width) + ' h=' + Math.round(r.height) + ' src=' + (els[i].src || '').slice(0, 60));
+            }
+            return out.join(' | ') || 'NO WIDGET FOUND';
+        """, "")
+        print(f"📸 Turnstile 截图已保存 /tmp/turnstile_before.png")
+        print(f"📍 Widget 位置: {rect}")
+        print(f"📍 窗口: screenX/Y + outer/inner: {js(sb, 'return (window.screenX||0)+\',\'+(window.screenY||0)+\',\'+window.outerWidth+\'x\'+window.outerHeight+\', inner \'+window.innerWidth+\'x\'+window.innerHeight;', '')}")
+    except Exception as e:
+        print(f"⚠️ 诊断截图失败: {e}")
     deadline = time.time() + timeout
     next_click = time.time() + first_wait
     clicks = 0
