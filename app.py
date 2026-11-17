@@ -291,14 +291,18 @@ def _click_turnstile(sb, locate_timeout=10) -> bool:
         return False
 
 def click_turnstile(sb) -> bool:
-    if _click_turnstile(sb):
-        return True
+    # 无头模式下 xdotool 没有显示器可点, 命令静默失败却返回 True,
+    # 导致 CDP 兜底永远走不到。无头时直接走 CDP, 有显示器才走 xdotool。
+    if not HEADLESS:
+        if _click_turnstile(sb):
+            return True
     coords = js(sb, TS_COORDS_JS)
     if coords:
         try:
             if hasattr(sb, "cdp") and hasattr(sb.cdp, "gui_click_x_y"):
                 print(f"🖱️ 坐标点击 Turnstile ({coords['cx']},{coords['cy']})")
                 sb.cdp.gui_click_x_y(int(coords["cx"]), int(coords["cy"]))
+                time.sleep(3)
                 return True
         except Exception as e:
             print(f"⚠️ 坐标点击失败: {e}")
@@ -306,10 +310,14 @@ def click_turnstile(sb) -> bool:
         if hasattr(sb, "cdp") and hasattr(sb.cdp, "click_captcha"):
             print("🖱️ 兜底调用 cdp 点击 ...")
             sb.cdp.click_captcha()
+            time.sleep(3)
             return True
         print("⚠️ 当前 SeleniumBase 版本无 sb.cdp.click_captcha")
     except Exception as e:
         print(f"⚠️ click_captcha 出错: {e}")
+    # 有显示器时最后再试一次 xdotool
+    if not HEADLESS:
+        return _click_turnstile(sb)
     return False
 
 def solve_turnstile(sb, timeout=120, tag="Turnstile", first_wait=10) -> bool:
